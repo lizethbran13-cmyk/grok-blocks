@@ -222,6 +222,7 @@ G.aim = function () {
   if (lp) { const t = Math.hypot(best.x - o.x, best.z - o.z) / spd; tx += (best.x - lp.x) * 60 * t * 0.5; tz += (best.z - lp.z) * 60 * t * 0.5; }
   return { ang: Math.atan2(tx - o.x, tz - o.z), tgt: best };
 };
+G.lockMark = function (t) { const el = document.getElementById('lockMark'); if (!el) return; if (!t) { el.classList.add('hidden'); return; } const W = Sim.W(), sz = (GB.SPECIES[t.sp] || {}).size || 1; const p = V.project(t.x, W.M.h(t.x, t.z) + 1.3 * sz, t.z); if (p.z > 1 || p.z < -1) { el.classList.add('hidden'); return; } el.classList.remove('hidden'); el.style.left = p.x + 'px'; el.style.top = p.y + 'px'; el.lastChild.textContent = t.name; };
 G.trackAim = function () { const W = Sim.W(); for (const e of W.ents) { const l = lastPos[e.id] || (lastPos[e.id] = {}); l.x = e.x; l.z = e.z; } };
 G.press = function (a) {
   if (a === 'dart' || a === 'flare') { const am = G.aim(); if (GS.me && GS.me.onFoot) GS.me.ang = am.ang; if (GS.role === 'client') { G.N.send({ t: 'act', a, ang: am.ang }); return; } Snd.unlock(); Sim.act(GS.pid, a, { ang: am.ang }); const ev = Sim.takeEvents(); if (ev.length) { G.onEvents(ev); if (G.N) G.N.bcast({ t: 'ev', l: ev }); } return; }
@@ -269,7 +270,7 @@ function frame(now) {
   const tgt = (GS.me && !GS.me.onFoot && W.truck) ? { x: W.truck.x, z: W.truck.z, ang: W.truck.ang } : GS.me;
   if (tgt) V.frame(tgt, dt);
   V.sync(W, GS.me, GS.others);
-  const am = G.aim(); const rt = document.getElementById('reticle'); rt.classList.toggle('lock', !!am.tgt); rt.dataset.n = am.tgt ? am.tgt.name : ''; G.trackAim();
+  const am = G.aim(); const rt = document.getElementById('reticle'); rt.classList.toggle('lock', !!am.tgt); rt.dataset.n = am.tgt ? am.tgt.name : ''; G.lockMark(am.tgt); G.trackAim();
   Snd.engine(W.truck ? W.truck.speed : 0, !!(W.truck && Math.abs(W.truck.speed) > 1));
   moodCheck();
   V.render(G.dark());

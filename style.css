@@ -66,8 +66,10 @@ input { font-family: inherit; font-weight: 800; font-size: 20px; padding: 10px 1
 #arrowTxt { position: absolute; left: 50%; transform: translateX(-50%); top: calc(92px + var(--st)); font-size: 12px; color: var(--gold); text-shadow: 0 1px 2px #000; white-space: nowrap; }
 #arrow.hidden + #arrowTxt { display: none; }
 #reticle { position: absolute; left: 50%; top: 44%; width: 30px; height: 30px; margin: -15px 0 0 -15px; border: 3px solid rgba(255,255,255,.75); border-radius: 50%; }
-#reticle.lock { border-color: #6aff6a; box-shadow: 0 0 10px #6aff6a; }
-#reticle.lock::after { content: attr(data-n); position: absolute; top: 32px; left: 50%; transform: translateX(-50%); font-size: 12px; color: #6aff6a; white-space: nowrap; text-shadow: 0 1px 2px #000; }
+#reticle.lock { border-color: rgba(106,255,106,.55); }
+#lockMark { position: absolute; left: 0; top: 0; pointer-events: none; transform: translate(-50%, -50%); }
+#lockMark i { display: block; width: 34px; height: 34px; margin: 0 auto; border: 3px solid #6aff6a; border-radius: 50%; box-shadow: 0 0 10px #6aff6a; }
+#lockMark b { display: block; text-align: center; font-size: 12px; color: #6aff6a; white-space: nowrap; text-shadow: 0 1px 2px #000; margin-top: 2px; }
 #hint { position: absolute; left: 50%; transform: translateX(-50%); bottom: calc(250px + var(--sb)); width: min(440px, 88vw); background: rgba(20,36,22,.88); border: 3px solid var(--gold); border-radius: 14px; padding: 8px 12px; font-size: 15px; text-align: center; }
 #toasts { position: fixed; left: 50%; transform: translateX(-50%); top: calc(212px + var(--st)); z-index: 40; display: flex; flex-direction: column; gap: 4px; align-items: center; pointer-events: none; width: min(340px, 84vw); }
 .toast { background: rgba(20,36,22,.86); border: 2px solid #7dd85a; border-radius: 10px; padding: 4px 10px; font-size: 13px; line-height: 1.25; opacity: 0; transform: translateY(-8px); transition: all .3s; text-align: center; }
