@@ -7,7 +7,7 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="theme-color" content="#1f3a24" />
   <title>GROK BLOCKS</title>
-  <link rel="stylesheet" href="style.css?v=1" />
+  <link rel="stylesheet" href="style.css?v=2" />
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%231f3a24'/%3E%3Crect x='10' y='30' width='44' height='22' fill='%237da84a'/%3E%3Crect x='10' y='40' width='44' height='12' fill='%238a6a42'/%3E%3Crect x='22' y='12' width='20' height='18' fill='%23f0c24b'/%3E%3C/svg%3E" />
 </head>
 <body>
@@ -17,10 +17,11 @@
   <div id="hud" class="hidden">
     <div id="hudL">
       <div class="pills">
-        <div class="pill">&#127919; <b id="nDarts">6/6</b></div>
-        <div class="pill">&#127878; <b id="nFlare">2</b></div>
-        <div class="pill">&#128666; <b id="nCargo">0/2</b></div>
-        <div class="pill gold">&#11088; <b id="nPts">0</b></div>
+        <div class="pill" id="ammoPill">&#127919; <b id="nDarts">6/6</b></div>
+        <div class="pill" id="toolPill">&#127878; <b id="nFlare">2</b></div>
+        <div class="pill" id="cargoPill">&#128666; <b id="nCargo">0/2</b></div>
+        <div class="pill gold" id="ptsPill">&#11088; <b id="nPts">0</b></div>
+        <div class="pill" id="heatP">&#128293; <b id="nHeat">0</b></div>
         <div class="pill" id="windP">&#128168; <i id="windA">&#11014;</i></div>
       </div>
       <div id="obj"></div>
@@ -42,6 +43,8 @@
       <button id="bCrew" class="cbtn crew foot gun" type="button"><i>&#128106;</i><b>CREW</b></button>
       <button id="bCrouch" class="cbtn crouch foot" type="button"><i>&#129486;</i><b>SNEAK</b></button>
       <button id="bFlare" class="cbtn flare" type="button"><i>&#127878;</i><b>FLARE</b></button>
+      <button id="bDrone" class="cbtn drone" type="button"><i>&#128759;</i><b>DRONE</b></button>
+      <button id="bNet" class="cbtn net foot" type="button"><i>&#129514;</i><b>NET</b></button>
       <button id="bSeat" class="cbtn seat drive gun" type="button"><i>&#128257;</i><b>SEAT</b></button>
       <button id="bHorn" class="cbtn horn drive" type="button"><i>&#128227;</i><b>HORN</b></button>
       <button id="bUse" class="cbtn use" type="button"><i>&#9995;</i><b>USE</b></button>
@@ -58,13 +61,14 @@
     <div class="card title">
       <div class="logo"><span class="lg1">GROK</span><span class="lg2">BLOCKS</span></div>
       <div class="bob">&#129426;&#128666;&#129421;</div>
-      <div class="tagline">Explore &middot; Dart &middot; Rescue &middot; Outsmart the poachers!</div>
+      <div class="tagline">Explore &middot; Dart &middot; Rescue &middot; or play the poacher</div>
       <div class="row prof">
         <input id="nameIn" maxlength="12" placeholder="Your name" autocomplete="off" />
         <div id="colorRow" class="swatches"></div>
       </div>
       <div class="btncol">
-        <button id="bPlay" class="btn primary" type="button">PLAY</button>
+        <button id="bPlay" class="btn primary" type="button">PLAY RANGER</button>
+        <button id="bPoach" class="btn red" type="button">POACHER MODE</button>
         <button id="bOnline" class="btn blue" type="button">PLAY WITH FRIENDS</button>
         <button id="bHow" class="btn alt small" type="button">HOW TO PLAY</button>
         <label class="toggle"><input type="checkbox" id="assistT" /> <span>Assist mode: slower poachers, stronger darts, calmer animals</span></label>
@@ -78,6 +82,7 @@
       <h2>PLAY WITH FRIENDS</h2>
       <p class="sub">2&ndash;3 rangers on their own phones. Same world, same animals, one truck: one drives while the others dart from the back!</p>
       <button id="bHost" class="btn primary" type="button">HOST A ROOM</button>
+      <label class="toggle"><input type="checkbox" id="poachT" /> <span>Poacher mode room (catch crates, dodge rangers)</span></label>
       <div class="or">or join a friend&rsquo;s room</div>
       <div class="row join">
         <input id="codeIn" maxlength="5" placeholder="CODE" autocomplete="off" autocapitalize="characters" spellcheck="false" />
@@ -106,6 +111,7 @@
   </div>
 
   <div id="scrBoard" class="screen hidden top"><div class="card wide"><h2>&#128203; CASE BOARD</h2><p class="sub small">Pick a rescue. Your progress is saved after every delivery.</p><div id="boardList"></div><button id="bBoardBack" class="btn primary small" type="button">BACK</button></div></div>
+  <div id="scrJobs" class="screen hidden top"><div class="card wide"><h2>&#128203; CONTRACTS</h2><p class="sub small">Shady jobs. Animals leave alive in crates. Your cash is saved apart from ranger points.</p><div id="jobList"></div><button id="bJobsBack" class="btn primary small" type="button">BACK</button></div></div>
   <div id="scrShop" class="screen hidden top"><div class="card wide"><h2>&#11088; UPGRADES</h2><p class="sub small">Spend rescue points on gear.</p><div id="shopList"></div><button id="bShopBack" class="btn primary small" type="button">BACK</button></div></div>
   <div id="scrMap" class="screen hidden top"><div class="card wide"><h2>&#128506;&#65039; FIELD GUIDE</h2><p class="sub" id="mapInfo"></p><div id="guideList"></div><button id="bMapBack" class="btn primary small" type="button">BACK</button></div></div>
   <div id="scrDone" class="screen hidden top"><div class="card"><div id="doneBody"></div><button id="bDoneGo" class="btn primary" type="button">KEEP EXPLORING</button></div></div>
@@ -117,11 +123,12 @@
         <li><b>Pick a case</b> at the Case Board in base camp, then drive through the gate to that biome.</li>
         <li><b>Walk</b> with the left stick, <b>look</b> by dragging the right side. The yellow arrow points at your target.</li>
         <li><b>DART</b> shoots where you look and locks on when the crosshair turns green. Darts are limited &mdash; restock at the camp Dart Supply.</li>
-        <li><b>Chill</b> animals let you walk up. <b>Feisty</b> ones charge if you rush in: tap <b>SNEAK</b>, stay <b>downwind</b> (the &#128168; arrow shows where the wind blows; approach so it blows from the animal to you), hide in bushes, or tap <b>CREW</b> so a ranger distracts them. <b>Runners</b> bolt: chase them in the truck, get ahead of them to tire them out &mdash; never ram!</li>
+        <li><b>Chill</b> animals let you walk up. <b>Feisty</b> ones charge if you rush in: tap <b>SNEAK</b>, stay <b>downwind</b> (the &#128168; arrow shows where the wind blows; approach so it blows from the animal to you), hide in bushes, or tap <b>CREW</b> so a ranger distracts them. <b>Runners</b> bolt: tap <b>DRONE</b> so a freeze ray slows them, or chase in the truck. Tap DRONE again to fly a recon sweep, then RETURN. Never ram!</li>
         <li>When an animal sleeps, bring the truck close and tap <b>LOAD</b>. Drive back to camp and tap <b>UNLOAD</b> inside a sanctuary fence.</li>
         <li>In the truck: <b>GAS</b>, <b>BRAKE</b>, <b>HAND</b>brake, steer with the stick or arrows. <b>SEAT</b> moves you to the back so your crew drives while you dart.</li>
         <li><b>Poachers</b> shout when they spot you. If they catch you they take the truck&rsquo;s cargo (delivered animals stay safe). Use a <b>FLARE</b> or <b>CREW</b> to scare them off. If they grab an animal, bump their jeep to free it.</li>
         <li>Rescue points buy dart and truck upgrades. Play with friends: one drives, the others dart!</li>
+        <li><b>Poacher mode</b> (from the title) is a cartoon job: net animals into crates, sneak into a sanctuary and unlock a pen, then sell the crates alive to a shady collector at your hideout van. Rangers and a heat meter are after you. Getting caught drops the crates, not your cash. V launches the drone, N throws a net.</li>
       </ol>
       <button id="bHowBack" class="btn primary" type="button">GOT IT</button>
     </div>
@@ -130,14 +137,14 @@
   <script src="three.min.js"></script>
   <script src="peerjs.min.js"></script>
   <script src="grok-net.js"></script>
-  <script src="js/data.js?v=1"></script>
+  <script src="js/data.js?v=2"></script>
   <script src="js/world.js?v=1"></script>
-  <script src="js/sim.js?v=2"></script>
-  <script src="js/view.js?v=1"></script>
+  <script src="js/sim.js?v=3"></script>
+  <script src="js/view.js?v=2"></script>
   <script src="js/audio.js?v=1"></script>
-  <script src="js/game.js?v=1"></script>
+  <script src="js/game.js?v=2"></script>
   <script src="js/net.js?v=1"></script>
-  <script src="js/ui.js?v=1"></script>
+  <script src="js/ui.js?v=2"></script>
   <script>GB.G.boot(); window.__gb = { G: GB.G, Sim: GB.Sim, World: GB.World, V: GB.View, GS: GB.G.GS, W: function () { return GB.Sim.W(); } };</script>
 </body>
 </html>

@@ -226,6 +226,10 @@ function truckMesh() {
 }
 function poacherMesh() { return blocky([[0.6, 0.8, 0.4, 0x2a2a2a, 0, 0.8, 0], [0.8, 0.8, 0.5, 0x6a4a2a, 0, 1.5, 0], [0.5, 0.5, 0.5, 0xf2c8a2, 0, 2.05, 0], [0.7, 0.3, 0.7, 0x222, 0, 2.4, 0]]); }
 function jeepMesh() { return blocky([[1.8, 0.6, 3.2, 0x5a4632, 0, 0.7, 0], [1.6, 0.7, 1.2, 0x3a3228, 0, 1.3, 0.4], [0.4, 0.4, 0.2, 0x222, -0.7, 0.4, 1.1], [0.4, 0.4, 0.2, 0x222, 0.7, 0.4, 1.1], [0.4, 0.4, 0.2, 0x222, -0.7, 0.4, -1.1], [0.4, 0.4, 0.2, 0x222, 0.7, 0.4, -1.1]]); }
+function rangerJeep() { return blocky([[1.8, 0.6, 3.2, 0x2f6b4a, 0, 0.7, 0], [1.6, 0.7, 1.2, 0xd8efe2, 0, 1.3, 0.4], [0.4, 0.4, 0.2, 0x222, -0.7, 0.4, 1.1], [0.4, 0.4, 0.2, 0x222, 0.7, 0.4, 1.1], [0.4, 0.4, 0.2, 0x222, -0.7, 0.4, -1.1], [0.4, 0.4, 0.2, 0x222, 0.7, 0.4, -1.1]]); }
+function droneMesh() { return blocky([[0.95, 0.16, 0.95, 0xd8f6ff, 0, 0, 0], [0.28, 0.12, 0.28, 0x1f6ab0, 0, 0.16, 0], [1.55, 0.06, 0.12, 0x1a1a1a, 0, 0.08, 0], [0.12, 0.06, 1.55, 0x1a1a1a, 0, 0.08, 0], [0.3, 0.08, 0.3, 0x9ee7ff, -0.7, 0.14, 0], [0.3, 0.08, 0.3, 0x9ee7ff, 0.7, 0.14, 0], [0.3, 0.08, 0.3, 0x9ee7ff, 0, 0.14, -0.7], [0.3, 0.08, 0.3, 0x9ee7ff, 0, 0.14, 0.7]]); }
+function vanMesh() { return blocky([[2.4, 1.05, 3.6, 0x2c2c36, 0, 0.85, 0], [1.5, 0.7, 1.2, 0x141820, 0, 1.55, 0.35], [0.45, 0.45, 0.28, 0x222, -0.85, 0.32, 1.25], [0.45, 0.45, 0.28, 0x222, 0.85, 0.32, 1.25], [0.45, 0.45, 0.28, 0x222, -0.85, 0.32, -1.25], [0.45, 0.45, 0.28, 0x222, 0.85, 0.32, -1.25], [1.1, 0.28, 0.08, 0xc86bff, 0, 1.15, 1.82]]); }
+
 
 V.sync = function (W, me, others) {
   // truck
@@ -238,26 +242,42 @@ V.sync = function (W, me, others) {
     const asleep = e.st === 'asleep'; g.rotation.z = asleep ? Math.PI / 2 : 0; g.position.y += asleep ? 0.2 : 0;
     if (e.st === 'windup') g.position.y += Math.sin(performance.now() / 60) * 0.15;
   }
-  const mark = (key, kind, x, y, z) => { seen[key] = 1; const g = ensure(key, () => kind === 'warn' ? blocky([[0.3, 0.8, 0.3, 0xff2d2d, 0, 0.7, 0], [0.3, 0.3, 0.3, 0xff2d2d, 0, 0, 0]]) : kind === 'zzz' ? blocky([[0.6, 0.15, 0.15, 0x9ad0ff, 0, 0.5, 0], [0.15, 0.4, 0.15, 0x9ad0ff, 0, 0.25, 0], [0.6, 0.15, 0.15, 0x9ad0ff, 0, 0, 0]]) : (() => { const m = new THREE.Mesh(new THREE.BoxGeometry(0.35, 14, 0.35), new THREE.MeshBasicMaterial({ color: 0xffd23f, transparent: true, opacity: 0.45, fog: false })); const gg = new THREE.Group(); gg.add(m); m.position.y = 7; return gg; })()); g.visible = true; g.position.set(x, y + (kind === 'beacon' ? 0 : Math.sin(performance.now() / 200) * 0.15), z); if (kind !== 'beacon') g.rotation.y = cam.rotation.y; };
+  const mark = (key, kind, x, y, z) => { seen[key] = 1; const g = ensure(key, () => kind === 'ice' ? blocky([[0.9, 0.18, 0.9, 0xbff6ff, 0, 0.15, 0], [0.4, 0.4, 0.4, 0xeafbff, 0, 0.45, 0]]) : kind === 'warn' ? blocky([[0.3, 0.8, 0.3, 0xff2d2d, 0, 0.7, 0], [0.3, 0.3, 0.3, 0xff2d2d, 0, 0, 0]]) : kind === 'zzz' ? blocky([[0.6, 0.15, 0.15, 0x9ad0ff, 0, 0.5, 0], [0.15, 0.4, 0.15, 0x9ad0ff, 0, 0.25, 0], [0.6, 0.15, 0.15, 0x9ad0ff, 0, 0, 0]]) : (() => { const m = new THREE.Mesh(new THREE.BoxGeometry(0.35, 14, 0.35), new THREE.MeshBasicMaterial({ color: 0xffd23f, transparent: true, opacity: 0.45, fog: false })); const gg = new THREE.Group(); gg.add(m); m.position.y = 7; return gg; })()); g.visible = true; g.position.set(x, y + (kind === 'beacon' ? 0 : Math.sin(performance.now() / 200) * 0.15), z); if (kind !== 'beacon') g.rotation.y = cam.rotation.y; };
   for (const e of W.ents) {
     if (e.st === 'cargo' || e.st === 'safe') continue;
     const top = W.M.h(e.x, e.z) + GB.SPECIES[e.sp].size * 2 + 1.2;
     if (e.st === 'windup' || e.st === 'charge') mark('w' + e.id, 'warn', e.x, top, e.z);
     else if (e.st === 'asleep') mark('z' + e.id, 'zzz', e.x, top - 0.6, e.z);
+    if (e.frost) mark('i' + e.id, 'ice', e.x, top - 0.4, e.z);
     if (e.caseAnimal && e.st !== 'caged') mark('b' + e.id, 'beacon', e.x, W.M.h(e.x, e.z), e.z);
   }
   for (const p of W.poachers) { if (p.st === 'alert' || p.st === 'chase') mark('w' + p.id, 'warn', p.x, W.M.h(p.x, p.z) + 3.2, p.z); }
   for (const j of W.jeeps) { if (j.chase || j.cargo) mark('w' + j.id, 'warn', j.x, W.M.h(j.x, j.z) + 3, j.z); if (j.cargo) { const e = W.ents.find((q) => q.id === j.cargo); if (e) { const ga = actors['a' + e.id]; if (ga) { ga.scale.setScalar(0.6); ga.position.y += 1.1; } } } }
-  for (const p of W.poachers) { seen['p' + p.id] = 1; const g = ensure('p' + p.id, poacherMesh); g.position.set(p.x, W.M.h(p.x, p.z), p.z); g.rotation.y = p.ang; if (p.st === 'chase') g.position.y += 0.1; }
-  for (const j of W.jeeps) { seen['j' + j.id] = 1; const g = ensure('j' + j.id, jeepMesh); g.position.set(j.x, W.M.h(j.x, j.z), j.z); g.rotation.y = j.ang; }
+  for (const p of W.poachers) { seen['p' + p.id] = 1; const g = ensure('p' + p.id, W.mode === 'poacher' ? (() => ranger(0x2f8a4a)) : poacherMesh); g.position.set(p.x, W.M.h(p.x, p.z), p.z); g.rotation.y = p.ang; if (p.st === 'chase') g.position.y += 0.1; }
+  for (const j of W.jeeps) { seen['j' + j.id] = 1; const g = ensure('j' + j.id, W.mode === 'poacher' ? rangerJeep : jeepMesh); g.position.set(j.x, W.M.h(j.x, j.z), j.z); g.rotation.y = j.ang; }
   for (const f of W.flares) { const k = 'f' + f.x.toFixed(1) + '_' + f.z.toFixed(1); seen[k] = 1; const g = ensure(k, () => blocky([[0.5, 0.8, 0.5, 0xff5a2a, 0, 0.6, 0]])); g.position.set(f.x, W.M.h(f.x, f.z) + 0.5, f.z); }
   for (let i = 0; i < W.darts.length; i++) { const d = W.darts[i]; const k = 'd' + i; seen[k] = 1; const g = ensure(k, () => blocky([[0.12, 0.12, 0.5, 0xf2e27a, 0, 0, 0]])); g.position.set(d.x, W.M.h(d.x, d.z) + 1.2, d.z); }
   // players
-  if (me) { seen.me = 1; const g = ensure('me', () => ranger(0x2f8a4a)); g.visible = me.onFoot; g.position.set(me.x, W.M.h(me.x, me.z), me.z); g.rotation.y = me.ang; g.scale.y = me.crouch ? 0.65 : 1; }
+  if (me) { seen.me = 1; const g = ensure('me', W.mode === 'poacher' ? poacherMesh : (() => ranger(0x2f8a4a))); g.visible = me.onFoot; g.position.set(me.x, W.M.h(me.x, me.z), me.z); g.rotation.y = me.ang; g.scale.y = me.crouch ? 0.65 : 1; }
   let oi = 0;
   for (const id in others) { const o = others[id]; if (!o || !o.s) continue; seen['o' + oi] = 1; const g = ensure('o' + oi, () => ranger(parseInt(o.color.slice(1), 16) || 0x3aa0d8)); g.visible = true; g.position.set(o.s.x, W.M.h(o.s.x, o.s.z), o.s.z); g.rotation.y = o.s.a; oi++; }
   // crew riders shown when seats hold crew ids
   if (W.truck) W.truck.seats.forEach((sid, i) => { const decor = !sid && i > 0 && W.truck.seats.some((q) => q); if ((sid && String(sid).indexOf('crew') === 0) || decor) { seen['c' + i] = 1; const g = ensure('c' + i, () => ranger(i ? 0xd23b6b : 0x3a6ad2)); const side = i === 1 ? 1 : i === 2 ? -1 : 0; g.position.set(W.truck.x + Math.cos(W.truck.ang) * side * 0.7, W.M.h(W.truck.x, W.truck.z) + 0.6, W.truck.z - Math.sin(W.truck.ang) * side * 0.7); g.rotation.y = W.truck.ang; } });
+  if (W.drone) {
+    seen.drone = 1; const g = ensure('drone', droneMesh); const y = W.M.h(W.drone.x, W.drone.z) + 8;
+    g.visible = true; g.position.set(W.drone.x, y, W.drone.z); g.rotation.y = W.drone.ang || 0;
+    g.rotation.z = Math.sin(performance.now() / 80) * 0.08;
+    if (W.drone.beam && W.drone.target) {
+      const e = W.ents.find((q) => q.id === W.drone.target);
+      if (e) {
+        seen.beam = 1;
+        const b = ensure('beam', () => new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.22, 1), new THREE.MeshBasicMaterial({ color: 0xbff6ff, transparent: true, opacity: 0.9, fog: false })));
+        const ey = W.M.h(e.x, e.z) + 1.3, dx = e.x - W.drone.x, dy = ey - y, dz = e.z - W.drone.z, len = Math.max(0.4, Math.hypot(dx, dy, dz));
+        b.visible = true; b.scale.set(1, 1, len); b.position.set(W.drone.x + dx / 2, y + dy / 2, W.drone.z + dz / 2); b.lookAt(e.x, ey, e.z);
+      }
+    }
+  }
+  if (W.dealer) { seen.van = 1; const g = ensure('van', vanMesh); g.visible = true; g.position.set(W.dealer.x, W.M.h(W.dealer.x, W.dealer.z), W.dealer.z); }
   for (const k in actors) if (!seen[k] && k !== 'truck') actors[k].visible = false;
 };
 

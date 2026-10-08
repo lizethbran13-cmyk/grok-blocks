@@ -127,3 +127,13 @@ body:not(.m-drive) #steer { display: none; }
 @media (orientation: landscape) and (max-height: 500px) { #hint { bottom: auto; top: calc(8px + var(--st)); width: min(420px, 50vw); font-size: 13px; } }
 .cbtn.on { transform: scale(.94); filter: brightness(1.3); }
 #windA { display: inline-block; font-style: normal; }
+
+#bDrone { background: rgba(58,160,216,.92); }
+#bNet { background: rgba(92,64,40,.92); }
+body.mode-poach #bDrone { display: none !important; }
+body:not(.mode-poach) #bNet { display: none !important; }
+body.mode-poach #bDart { display: none !important; }
+#heatP { display: none; }
+body.mode-poach #heatP { display: inline-block; }
+#heatP.warm { border-color: #f0c24b; color: #ffe7a0; }
+#heatP.hot { border-color: #ff6b6b; color: #ffd0d0; }

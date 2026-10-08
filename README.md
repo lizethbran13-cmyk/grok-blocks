@@ -17,7 +17,9 @@ A blocky voxel-world **wildlife rescue** game for phones and desktop. You're a r
   - Getting caught confiscates the truck's cargo and sends you back to camp. Delivered animals and case progress are kept.
   - Use flares or the crew's siren to scare them off.
   - If you take too long, they go after the case animals. Bump their jeep to free a caged animal.
-- **8 cases** with a tracker, a yellow objective arrow and 1–3 stars, plus free roam:
+- **Drone:** when a runner bolts, tap DRONE. It follows and slows them with a visible freeze ray, so you don't have to corner them. Tap again to fly it yourself (recon), mark animals and poachers on the minimap, then send it home when the battery runs out. Case **Sky Eye** is a recon job in the snow.
+- **Poacher mode** (separate save): cartoon contracts where you crate animals alive, sneak into a sanctuary to unlock a pen, and sell the crates to a shady collector at a hideout van. Rangers, ranger jeeps and a heat meter chase you. A bust drops the haul, not your cash. Six contracts and black-market gear.
+- **9 cases** with a tracker, a yellow objective arrow and 1–3 stars, plus free roam:
   - First Rescue (tutorial)
   - Stripe Chase
   - Relocate the Rhino
@@ -26,6 +28,7 @@ A blocky voxel-world **wildlife rescue** game for phones and desktop. You're a r
   - Wetland Watch
   - Stop the Convoy
   - The Big Herd
+  - Sky Eye (drone recon)
 - **Points** buy upgrades: darts, range, softer dose, engine, cargo bed, flares.
 - **Fair play:**
   - Assist mode

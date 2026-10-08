@@ -54,7 +54,10 @@ B.CASES = [
     goals: [{ kind: 'free', n: 1 }, { kind: 'rescue', species: 'fox', n: 1 }] },
   { id: 'c8', name: 'The Big Herd', biome: 'savanna', night: false,
     brief: 'Four animals, one truck, and poachers closing in. Deliver the whole herd.',
-    goals: [{ kind: 'rescue', species: 'elephant', n: 1 }, { kind: 'rescue', species: 'giraffe', n: 1 }, { kind: 'rescue', species: 'zebra', n: 1 }, { kind: 'rescue', species: 'lion', n: 1 }] }
+    goals: [{ kind: 'rescue', species: 'elephant', n: 1 }, { kind: 'rescue', species: 'giraffe', n: 1 }, { kind: 'rescue', species: 'zebra', n: 1 }, { kind: 'rescue', species: 'lion', n: 1 }] },
+  { id: 'c9', name: 'Sky Eye', biome: 'snow', night: false,
+    brief: 'Launch the DRONE and fly a recon sweep over the poacher camp so it shows on your map. Then freeze-ray the snow leopard instead of cornering it, and bring it home.',
+    goals: [{ kind: 'recon', n: 1 }, { kind: 'rescue', species: 'leopard', n: 1 }] }
 ];
 B.UPGRADES = [
   { id: 'darts', name: 'Extra Darts', desc: '+2 darts in the clip', costs: [80, 160, 280], max: 3 },
@@ -64,6 +67,36 @@ B.UPGRADES = [
   { id: 'cargo', name: 'Cargo Bed', desc: '+1 animal slot in the truck', costs: [180, 320], max: 2 },
   { id: 'flare', name: 'Flare Pack', desc: '+1 flare to scare poachers', costs: [90, 170], max: 2 }
 ];
+/* Poacher mode: cartoon contracts. Animals leave alive in crates. */
+B.JOBS = [
+  { id: 'j1', name: 'Easy Crate', biome: 'savanna',
+    brief: 'Net a calm giraffe and sell the crate to the shady collector at your hideout. It stays alive the whole way.',
+    goals: [{ kind: 'sell', species: 'giraffe', n: 1 }] },
+  { id: 'j2', name: 'Stripe Job', biome: 'savanna',
+    brief: 'The zebra runs. Herd it with the truck until it is tired, net it, and sell the crate.',
+    goals: [{ kind: 'sell', species: 'zebra', n: 1 }] },
+  { id: 'j3', name: 'Pen Raid', biome: 'camp',
+    brief: 'Sneak into Sunlands Sanctuary, crouch at the pen lock, crate one animal and sell it at your hideout. Rangers are on patrol.',
+    goals: [{ kind: 'raid', n: 1 }, { kind: 'sell', species: '', n: 1 }] },
+  { id: 'j4', name: 'Quiet Paws', biome: 'snow',
+    brief: 'A collector wants a snow leopard. Keep your heat down and dodge the ranger jeeps.',
+    goals: [{ kind: 'sell', species: 'leopard', n: 1 }] },
+  { id: 'j5', name: 'Wetland Order', biome: 'wet',
+    brief: 'Crate a flamingo and a capybara for the van. Both go to a private ranch, alive.',
+    goals: [{ kind: 'sell', species: 'flamingo', n: 1 }, { kind: 'sell', species: 'capy', n: 1 }] },
+  { id: 'j6', name: 'Big Collector', biome: 'savanna',
+    brief: 'A lion and an elephant, crated and sold. Rangers will be looking, so use cover when your heat climbs.',
+    goals: [{ kind: 'sell', species: 'lion', n: 1 }, { kind: 'sell', species: 'elephant', n: 1 }] }
+];
+B.PUPGRADES = [
+  { id: 'nets', name: 'Extra Nets', desc: '+2 nets in the bag', costs: [70, 140, 220], max: 3 },
+  { id: 'quiet', name: 'Quiet Boots', desc: 'Rangers notice you later', costs: [90, 170], max: 2 },
+  { id: 'engine', name: 'Getaway Engine', desc: 'Faster truck, tighter turns', costs: [110, 200, 320], max: 3 },
+  { id: 'cargo', name: 'Extra Crates', desc: '+1 crate on the truck', costs: [100, 190], max: 2 },
+  { id: 'plates', name: 'Muddy Plates', desc: 'Heat climbs slower when spotted', costs: [80, 150], max: 2 },
+  { id: 'flare', name: 'Decoy Flares', desc: '+1 decoy to distract rangers', costs: [60, 120], max: 2 }
+];
 B.caseById = (id) => B.CASES.find((c) => c.id === id);
+B.jobById = (id) => B.JOBS.find((c) => c.id === id);
 B.sp = (id) => B.SPECIES[id];
 })();
