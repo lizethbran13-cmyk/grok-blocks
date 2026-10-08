@@ -556,7 +556,7 @@ Sim.pack = function () {
     pens: W.pens || { sun: 0, frost: 0 },
     dealer: W.dealer ? [r2(W.dealer.x), r2(W.dealer.z)] : null,
     drone: W.drone ? { o: W.drone.owner, x: r2(W.drone.x), z: r2(W.drone.z), a: r2(W.drone.ang), m: W.drone.mode, tg: W.drone.target || '', bat: Math.round(W.drone.bat), beam: W.drone.beam ? 1 : 0 } : null,
-    marks: (W.marks || []).slice(-12).map((m) => [r2(m.x), r2(m.z), m.k])
+    marks: (W.marks || []).slice().sort((a, b) => (a.k === 'animal' ? 0 : 1) - (b.k === 'animal' ? 0 : 1)).slice(-12).map((m) => [r2(m.x), r2(m.z), m.k])
   };
 };
 Sim.unpack = function (s) {
@@ -594,11 +594,17 @@ function flyToward(d, tx, tz, spd, dt) {
   const step = Math.min(dist, spd * dt);
   flyXY(d, d.x + Math.sin(a) * step, d.z + Math.cos(a) * step);
 }
-function addMark(x, z, k) {
-  const key = k + ':' + (x | 0) + ':' + (z | 0);
-  if ((W.marks || []).some((m) => m.key === key)) return;
+function addMark(x, z, k, id) {
+  // one live blip per poacher / animal / camp, so a runner crossing cells
+  // cannot shove the poacher marks off the minimap
+  const key = k + ':' + (id != null ? id : ((x | 0) + ':' + (z | 0)));
+  const m = (W.marks || []).find((q) => q.key === key);
+  if (m) { m.x = x; m.z = z; m.t = W.t; return; }
   W.marks.push({ x, z, k, key, t: W.t });
-  if (W.marks.length > 14) W.marks.shift();
+  if (W.marks.length > 16) {
+    const i = W.marks.findIndex((q) => q.k === 'animal');
+    if (i >= 0) W.marks.splice(i, 1); else W.marks.shift();
+  }
 }
 function creditRecon() {
   let hit = false;
@@ -620,15 +626,15 @@ function droneAct(pid) {
   W.drone.owner = pid;
   if (W.drone.mode === 'follow') W.drone.mode = 'recon';
   else if (W.drone.mode === 'recon') W.drone.mode = 'return';
-  else W.drone.mode = 'recon';
+  // already flying home: another press (or a double tap) must not send it back out
   W.drone.beam = 0;
   pushEv({ t: 'dronemode', mode: W.drone.mode });
 }
 function droneScan(d) {
-  for (const q of W.poachers) if (hypot(q.x - d.x, q.z - d.z) < 22) addMark(q.x, q.z, 'poacher');
-  for (const e of W.ents) if (e.st !== 'cargo' && e.st !== 'safe' && hypot(e.x - d.x, e.z - d.z) < 18) addMark(e.x, e.z, 'animal');
+  for (const q of W.poachers) if (hypot(q.x - d.x, q.z - d.z) < 22) addMark(q.x, q.z, 'poacher', q.id);
+  for (const e of W.ents) if (e.st !== 'cargo' && e.st !== 'safe' && hypot(e.x - d.x, e.z - d.z) < 18) addMark(e.x, e.z, 'animal', e.id);
   if (W.M.pcamp && hypot(W.M.pcamp.x - d.x, W.M.pcamp.z - d.z) < 18) {
-    addMark(W.M.pcamp.x, W.M.pcamp.z, 'camp');
+    addMark(W.M.pcamp.x, W.M.pcamp.z, 'camp', 'camp');
     if (!d.sawCamp) { d.sawCamp = 1; creditRecon(); }
   }
 }
@@ -662,8 +668,9 @@ function droneTick(dt) {
     if (!owner) { W.drone = null; return; }
     const tx = owner.onFoot || !W.truck ? owner.x : W.truck.x;
     const tz = owner.onFoot || !W.truck ? owner.z : W.truck.z;
-    flyToward(d, tx, tz, 24, dt);
-    if (hypot(d.x - tx, d.z - tz) < 2.6) { W.drone = null; pushEv({ t: 'droneret' }); }
+    flyToward(d, tx, tz, 36, dt);
+    const home = hypot(d.x - tx, d.z - tz) < 3.2 || (owner.onFoot && hypot(d.x - owner.x, d.z - owner.z) < 3.2);
+    if (home) { W.drone = null; pushEv({ t: 'droneret' }); }
   }
 }
 
