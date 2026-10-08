@@ -38,6 +38,6 @@ A blocky voxel-world **wildlife rescue** game for phones and desktop. You're a r
   - Minimap and wind indicator
   - Field guide
 - **Co-op (2–3 players):** the host runs the game, friends join with a 5-letter room code (PeerJS), and everyone gets a name tag. Friends can ride in the truck and dart from the back. If someone leaves, the game keeps going.
-- **Touch controls** built for iPhone Safari in portrait and landscape (buttons ≥ 58 px). On a keyboard: WASD/arrows to move or steer, Space for gas/dart, E to use.
+- **Touch controls** built for iPhone Safari in portrait and landscape (buttons ≥ 58 px). On a keyboard: WASD or the arrows to walk or drive, Shift for the handbrake, Space or F to dart, E to use, Q for a flare, C to sneak, T to switch seats, R for the crew, Esc to pause.
 
 Built with three.js. All art is generated in code from blocks, with no external assets.
