@@ -291,7 +291,7 @@ function poachersTick(dt) {
     if (p.st === 'alert') { if (p.alert <= 0) p.st = 'chase'; continue; }
     if (p.st === 'chase' && seen) {
       steer(p, seen.x, seen.z, assist ? 4.6 : 6, dt, 0.4, 1);
-      for (const pl of Object.values(W.players)) if (pl.inv <= 0 && (pl.onFoot || !W.truck || Math.abs(W.truck.speed) < 2) && hypot(pl.x - p.x, pl.z - p.z) < 1.6) busted(pl);
+      for (const pl of Object.values(W.players)) if (W.t > 4 && pl.inv <= 0 && (pl.onFoot || !W.truck || Math.abs(W.truck.speed) < 2) && hypot(pl.x - p.x, pl.z - p.z) < 1.6) busted(pl);
       if (!seen) { /* keep */ }
     } else if (p.grab) {
       const v = W.ents.find((e) => e.id === p.grab);
@@ -327,7 +327,7 @@ function poachersTick(dt) {
         else {
           if (j.alert <= 0) { tx = pl.x; tz = pl.z; spd = assist ? 9 : 11.5; }
           else spd = 0.01;
-          if (hypot(pl.x - j.x, pl.z - j.z) < 2.8 && pl.inv <= 0 && j.alert <= 0 && (pl.onFoot || !W.truck || Math.abs(W.truck.speed) < 6)) { j.chase = 0; busted(pl); }
+          if (W.t > 4 && hypot(pl.x - j.x, pl.z - j.z) < 2.8 && pl.inv <= 0 && j.alert <= 0 && (pl.onFoot || !W.truck || Math.abs(W.truck.speed) < 6)) { j.chase = 0; busted(pl); }
         }
       }
     }
