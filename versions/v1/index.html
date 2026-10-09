@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>/* Grok Arcade Hall of Game Records: archived old version 1.0 of grok-blocks. Saves are kept separate from the newest version. */
+(function(){var P='grokOldVersion.grok-blocks.v1:';try{var S=Storage.prototype,g=S.getItem,s=S.setItem,r=S.removeItem;function L(t){try{return t===window.localStorage;}catch(e){return false;}}
+S.getItem=function(k){return g.call(this,L(this)?P+k:k);};S.setItem=function(k,v){return s.call(this,L(this)?P+k:k,v);};S.removeItem=function(k){return r.call(this,L(this)?P+k:k);};}catch(e){}
+window.GROK_OLD_VERSION={repo:'grok-blocks',label:'v1',ver:'1.0',prefix:P};
+function badge(){try{var d=document.createElement('div');d.id='grokOldVerBadge';d.setAttribute('style','position:fixed;left:50%;top:6px;transform:translateX(-50%);z-index:2147483647;background:rgba(20,10,43,.92);color:#ffe14d;font:bold 12px/1.3 system-ui,sans-serif;padding:6px 12px;border-radius:14px;border:2px solid #ff4fd8;box-shadow:0 2px 10px rgba(0,0,0,.4);pointer-events:none;transition:opacity .8s;text-align:center;max-width:90vw');d.textContent='\uD83D\uDCFC OLD VERSION 1.0 \u00b7 from the Hall of Game Records \u00b7 separate save';document.body.appendChild(d);setTimeout(function(){d.style.opacity='0';},6000);setTimeout(function(){if(d.parentNode)d.parentNode.removeChild(d);},7000);}catch(e){}}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',badge);else badge();})();</script>
+<meta name="robots" content="noindex">
+
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="theme-color" content="#1f3a24" />
+  <title>GROK BLOCKS</title>
+  <link rel="stylesheet" href="style.css?v=1" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%231f3a24'/%3E%3Crect x='10' y='30' width='44' height='22' fill='%237da84a'/%3E%3Crect x='10' y='40' width='44' height='12' fill='%238a6a42'/%3E%3Crect x='22' y='12' width='20' height='18' fill='%23f0c24b'/%3E%3C/svg%3E" />
+</head>
+<body>
+  <canvas id="c"></canvas>
+  <div id="tags"></div>
+
+  <div id="hud" class="hidden">
+    <div id="hudL">
+      <div class="pills">
+        <div class="pill">&#127919; <b id="nDarts">6/6</b></div>
+        <div class="pill">&#127878; <b id="nFlare">2</b></div>
+        <div class="pill">&#128666; <b id="nCargo">0/2</b></div>
+        <div class="pill gold">&#11088; <b id="nPts">0</b></div>
+        <div class="pill" id="windP">&#128168; <i id="windA">&#11014;</i></div>
+      </div>
+      <div id="obj"></div>
+    </div>
+    <div id="hudR">
+      <button id="bMute" class="rbtn" type="button" aria-label="Sound">&#128266;</button>
+      <button id="bMap" class="rbtn" type="button" aria-label="Map">&#128506;&#65039;</button>
+      <button id="bPause" class="rbtn" type="button" aria-label="Pause">&#10074;&#10074;</button>
+    </div>
+    <canvas id="mini" width="150" height="150"></canvas>
+    <div id="biomeName"></div>
+    <div id="seatInfo"></div>
+    <div id="codeBadge" class="hidden"></div>
+    <div id="arrow" class="hidden"><i>&#10148;</i></div><div id="arrowTxt"></div>
+    <div id="lockMark" class="hidden"><i></i><b></b></div><div id="reticle"></div>
+    <div id="hint" class="hidden"></div>
+    <div id="joyzone"><div id="joybase"><div id="joyknob"></div></div></div>
+    <div id="btns">
+      <button id="bCrew" class="cbtn crew foot gun" type="button"><i>&#128106;</i><b>CREW</b></button>
+      <button id="bCrouch" class="cbtn crouch foot" type="button"><i>&#129486;</i><b>SNEAK</b></button>
+      <button id="bFlare" class="cbtn flare" type="button"><i>&#127878;</i><b>FLARE</b></button>
+      <button id="bSeat" class="cbtn seat drive gun" type="button"><i>&#128257;</i><b>SEAT</b></button>
+      <button id="bHorn" class="cbtn horn drive" type="button"><i>&#128227;</i><b>HORN</b></button>
+      <button id="bUse" class="cbtn use" type="button"><i>&#9995;</i><b>USE</b></button>
+      <button id="bDart" class="cbtn dart foot gun" type="button"><i>&#127919;</i><b>DART</b></button>
+      <button id="bHb" class="cbtn hb drive" type="button"><i>&#9995;</i><b>HAND</b></button>
+      <button id="bBack" class="cbtn brake drive" type="button"><i>&#9660;</i><b>BRAKE</b></button>
+      <button id="bGo" class="cbtn gas drive" type="button"><i>&#9650;</i><b>GAS</b></button>
+    </div>
+    <div id="steer" class="drive"><button id="bLeft" class="cbtn" type="button"><i>&#9664;</i></button><button id="bRight" class="cbtn" type="button"><i>&#9654;</i></button></div>
+  </div>
+  <div id="toasts"></div>
+
+  <div id="scrTitle" class="screen">
+    <div class="card title">
+      <div class="logo"><span class="lg1">GROK</span><span class="lg2">BLOCKS</span></div>
+      <div class="bob">&#129426;&#128666;&#129421;</div>
+      <div class="tagline">Explore &middot; Dart &middot; Rescue &middot; Outsmart the poachers!</div>
+      <div class="row prof">
+        <input id="nameIn" maxlength="12" placeholder="Your name" autocomplete="off" />
+        <div id="colorRow" class="swatches"></div>
+      </div>
+      <div class="btncol">
+        <button id="bPlay" class="btn primary" type="button">PLAY</button>
+        <button id="bOnline" class="btn blue" type="button">PLAY WITH FRIENDS</button>
+        <button id="bHow" class="btn alt small" type="button">HOW TO PLAY</button>
+        <label class="toggle"><input type="checkbox" id="assistT" /> <span>Assist mode: slower poachers, stronger darts, calmer animals</span></label>
+      </div>
+      <a class="foot link" href="https://lizethbran13-cmyk.github.io/grok-arcade/">&larr; Grok Arcade</a>
+    </div>
+  </div>
+
+  <div id="scrOnline" class="screen hidden">
+    <div class="card">
+      <h2>PLAY WITH FRIENDS</h2>
+      <p class="sub">2&ndash;3 rangers on their own phones. Same world, same animals, one truck: one drives while the others dart from the back!</p>
+      <button id="bHost" class="btn primary" type="button">HOST A ROOM</button>
+      <div class="or">or join a friend&rsquo;s room</div>
+      <div class="row join">
+        <input id="codeIn" maxlength="5" placeholder="CODE" autocomplete="off" autocapitalize="characters" spellcheck="false" />
+        <button id="bJoin" class="btn blue" type="button">JOIN</button>
+      </div>
+      <div id="onlineMsg" class="msg"></div>
+      <button id="bOnlineBack" class="btn alt small" type="button">BACK</button>
+    </div>
+  </div>
+
+  <div id="scrPause" class="screen hidden top">
+    <div class="card">
+      <h2>PAUSED</h2>
+      <div class="btncol">
+        <button id="bResume" class="btn primary" type="button">RESUME</button>
+        <div class="btnrow tight">
+          <button id="bPBoard" class="btn blue small" type="button">&#128203; CASES</button>
+          <button id="bPShop" class="btn green small" type="button">&#11088; UPGRADES</button>
+        </div>
+        <button id="bPCamp" class="btn alt small" type="button">&#127957;&#65039; RADIO BACK TO CAMP</button>
+        <label class="toggle"><input type="checkbox" id="assistT2" /> <span>Assist mode</span></label>
+        <label class="toggle"><input type="checkbox" id="cycleT" /> <span>Day/night cycle</span></label>
+        <button id="bPQuit" class="btn red small" type="button">QUIT TO TITLE</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="scrBoard" class="screen hidden top"><div class="card wide"><h2>&#128203; CASE BOARD</h2><p class="sub small">Pick a rescue. Your progress is saved after every delivery.</p><div id="boardList"></div><button id="bBoardBack" class="btn primary small" type="button">BACK</button></div></div>
+  <div id="scrShop" class="screen hidden top"><div class="card wide"><h2>&#11088; UPGRADES</h2><p class="sub small">Spend rescue points on gear.</p><div id="shopList"></div><button id="bShopBack" class="btn primary small" type="button">BACK</button></div></div>
+  <div id="scrMap" class="screen hidden top"><div class="card wide"><h2>&#128506;&#65039; FIELD GUIDE</h2><p class="sub" id="mapInfo"></p><div id="guideList"></div><button id="bMapBack" class="btn primary small" type="button">BACK</button></div></div>
+  <div id="scrDone" class="screen hidden top"><div class="card"><div id="doneBody"></div><button id="bDoneGo" class="btn primary" type="button">KEEP EXPLORING</button></div></div>
+
+  <div id="scrHow" class="screen hidden top">
+    <div class="card help">
+      <h2>HOW TO PLAY</h2>
+      <ol>
+        <li><b>Pick a case</b> at the Case Board in base camp, then drive through the gate to that biome.</li>
+        <li><b>Walk</b> with the left stick, <b>look</b> by dragging the right side. The yellow arrow points at your target.</li>
+        <li><b>DART</b> shoots where you look and locks on when the crosshair turns green. Darts are limited &mdash; restock at the camp Dart Supply.</li>
+        <li><b>Chill</b> animals let you walk up. <b>Feisty</b> ones charge if you rush in: tap <b>SNEAK</b>, stay <b>downwind</b> (the &#128168; arrow shows where the wind blows; approach so it blows from the animal to you), hide in bushes, or tap <b>CREW</b> so a ranger distracts them. <b>Runners</b> bolt: chase them in the truck, get ahead of them to tire them out &mdash; never ram!</li>
+        <li>When an animal sleeps, bring the truck close and tap <b>LOAD</b>. Drive back to camp and tap <b>UNLOAD</b> inside a sanctuary fence.</li>
+        <li>In the truck: <b>GAS</b>, <b>BRAKE</b>, <b>HAND</b>brake, steer with the stick or arrows. <b>SEAT</b> moves you to the back so your crew drives while you dart.</li>
+        <li><b>Poachers</b> shout when they spot you. If they catch you they take the truck&rsquo;s cargo (delivered animals stay safe). Use a <b>FLARE</b> or <b>CREW</b> to scare them off. If they grab an animal, bump their jeep to free it.</li>
+        <li>Rescue points buy dart and truck upgrades. Play with friends: one drives, the others dart!</li>
+      </ol>
+      <button id="bHowBack" class="btn primary" type="button">GOT IT</button>
+    </div>
+  </div>
+
+  <script src="three.min.js"></script>
+  <script src="peerjs.min.js"></script>
+  <script src="grok-net.js"></script>
+  <script src="js/data.js?v=1"></script>
+  <script src="js/world.js?v=1"></script>
+  <script src="js/sim.js?v=1"></script>
+  <script src="js/view.js?v=1"></script>
+  <script src="js/audio.js?v=1"></script>
+  <script src="js/game.js?v=1"></script>
+  <script src="js/net.js?v=1"></script>
+  <script src="js/ui.js?v=1"></script>
+  <script>GB.G.boot(); window.__gb = { G: GB.G, Sim: GB.Sim, World: GB.World, V: GB.View, GS: GB.G.GS, W: function () { return GB.Sim.W(); } };</script>
+</body>
+</html>
