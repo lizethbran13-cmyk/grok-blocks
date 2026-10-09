@@ -13,8 +13,8 @@ function syncPlayers() {
 }
 function common(room) {
   room.on('players', () => { if (N.room === room) syncPlayers(); });
-  room.on('join', (p) => { if (N.room !== room) return; G.toast(p.name + ' joined the rescue! \uD83E\uDD81'); Snd.fx('join'); if (room.isHost) { Sim.addPlayer(p.pid); room.sendTo(p.pid, { t: 'map', map: Sim.W().map, o: { caseId: Sim.W().caseId, night: Sim.W().night ? 1 : 0, seed: Sim.W().seed }, snap: Sim.pack() }); } });
-  room.on('leave', (p) => { if (N.room !== room) return; G.toast(p.name + ' left. The rescue goes on!'); Snd.fx('leave'); delete GS.others[p.pid]; if (room.isHost) Sim.removePlayer(p.pid); });
+  room.on('join', (p) => { if (N.room !== room) return; G.toast(p.name + (G.isPoach() ? ' joined your crew! \uD83D\uDCE6' : ' joined the rescue! \uD83E\uDD81')); Snd.fx('join'); if (room.isHost) { Sim.addPlayer(p.pid); room.sendTo(p.pid, { t: 'map', map: Sim.W().map, o: { caseId: Sim.W().caseId, night: Sim.W().night ? 1 : 0, seed: Sim.W().seed }, snap: Sim.pack() }); } });
+  room.on('leave', (p) => { if (N.room !== room) return; G.toast(p.name + (G.isPoach() ? ' left. The job goes on!' : ' left. The rescue goes on!')); Snd.fx('leave'); delete GS.others[p.pid]; if (room.isHost) Sim.removePlayer(p.pid); });
 }
 function startUI() { GS.ui = 'game'; G.UI.show(); G.loop(); }
 N.host = function (code) {
@@ -25,7 +25,7 @@ N.host = function (code) {
   room.on('open', () => {
     if (N.room !== room) return; GN.saveProfile(G.myName(), G.save().color); GS.role = 'host'; Snd.fx('join');
     G.UI.codeBadge(room.code);
-    if (GS.ui !== 'game') { G.freeRoam('camp'); startUI(); }
+    if (GS.ui !== 'game') { G.startMode(GS.mode === 'poacher' ? 'poacher' : 'ranger'); }
     syncPlayers();
   });
   room.on('message', (d, from) => {
@@ -46,7 +46,7 @@ N.join = function (code) {
   room.on('open', () => { if (N.room !== room) return; GN.saveProfile(G.myName(), G.save().color); GS.role = 'client'; msg('Connected! Waiting for the host\u2026', true); Snd.fx('join'); G.UI.codeBadge(room.code); });
   room.on('message', (d) => {
     if (!d || N.room !== room) return;
-    if (d.t === 'map') { G.applySnap(d.snap); GS.me = Sim.addPlayer(GS.pid); G.enterLocal(Sim.W()); startUI(); G.UI.closeAll(); }
+    if (d.t === 'map') { if (GS.ui !== 'game') G.resetSession(); G.applySnap(d.snap); Sim.resetPlayers(); GS.me = Sim.addPlayer(GS.pid); G.enterLocal(Sim.W()); startUI(); G.UI.closeAll(); }
     else if (d.t === 's') { G.applySnap(d.s); if (d.pl) for (const k in d.pl) { if (k === GS.pid) { const p = Sim.W().players[GS.pid]; if (p && d.pl[k]) { const q = d.pl[k], far = Math.hypot(q.x - p.x, q.z - p.z) > 6; p.farN = far ? (p.farN || 0) + 1 : 0; if (!q.f || !p.onFoot || p.farN > 4) { p.x = q.x; p.z = q.z; p.ang = q.a; } p.onFoot = !!q.f; p.crouch = !!q.c; } continue; } const o = GS.others[k] = GS.others[k] || { name: 'Ranger', color: '#3ff0ff' }; o.s = d.pl[k]; } }
     else if (d.t === 'ev') G.onEvents(d.l || []);
   });
@@ -56,8 +56,18 @@ N.join = function (code) {
     if (!room.opened) { N.room = null; msg(e.title + ': ' + e.message); return; }
     N.room = null; try { room.leave(); } catch (er) { /* ignore */ }
     for (const k in GS.others) delete GS.others[k]; G.UI.codeBadge(null);
-    G.toast('The host left \u2014 you keep the case going solo.', true); GS.role = 'solo';
-    if (Sim.W().M) { const s = Sim.pack(); Sim.load(s.map, { caseId: s.caseId, night: s.night, seed: s.seed }); Sim.unpack(s); Sim.addPlayer(GS.pid); GS.me = Sim.W().players[GS.pid]; }
+    G.toast(G.isPoach() ? 'The host left \u2014 you keep the job going solo.' : 'The host left \u2014 you keep the case going solo.', true); GS.role = 'solo';
+    if (Sim.W().M) {
+      const s = Sim.pack(), me0 = Sim.W().players[GS.pid];
+      Sim.load(s.map, { caseId: s.caseId, night: s.night, seed: s.seed, mode: s.mode, jobId: s.jobId || null, heat: s.heat });
+      Sim.unpack(s); GS.mode = Sim.W().mode;
+      // the host's truck seats are gone with the host: everyone is on foot, the truck stays put
+      if (Sim.W().truck) Sim.W().truck.seats = [null, null, null];
+      Sim.resetPlayers(); const me = Sim.addPlayer(GS.pid);
+      if (me0) { me.x = me0.x; me.z = me0.z; me.ang = me0.ang; me.y = Sim.W().M.h(me.x, me.z); }
+      GS.me = me; if (Sim.W().mode === 'poacher') GS.jobId = Sim.W().jobId; else GS.caseId = Sim.W().caseId;
+      G.UI.hud();
+    }
   });
   room.start();
 };

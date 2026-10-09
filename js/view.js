@@ -183,6 +183,7 @@ function buildProps(m) {
 const actors = {};
 function ensure(key, build) { if (!actors[key]) { actors[key] = build(); scene.add(actors[key]); } return actors[key]; }
 function blocky(parts) { const g = new THREE.Group(); for (const p of parts) { const mesh = new THREE.Mesh(new THREE.BoxGeometry(p[0], p[1], p[2]), mat(p[3], false)); mesh.position.set(p[4], p[5], p[6]); g.add(mesh); } return g; }
+V.meKind = () => (actors.me ? actors.me.userData.kind : null);
 V.clearActors = function () { for (const k in actors) { scene.remove(actors[k]); } for (const k in actors) delete actors[k]; };
 
 function ranger(color) { return blocky([[0.7, 0.8, 0.4, 0x3a3a3a, 0, 0.9, 0], [0.8, 0.7, 0.5, color, 0, 1.55, 0], [0.5, 0.5, 0.5, 0xf2c8a2, 0, 2.1, 0], [0.62, 0.25, 0.62, 0xf0c24b, 0, 2.45, 0]]); }
@@ -258,7 +259,7 @@ V.sync = function (W, me, others) {
   for (const f of W.flares) { const k = 'f' + f.x.toFixed(1) + '_' + f.z.toFixed(1); seen[k] = 1; const g = ensure(k, () => blocky([[0.5, 0.8, 0.5, 0xff5a2a, 0, 0.6, 0]])); g.position.set(f.x, W.M.h(f.x, f.z) + 0.5, f.z); }
   for (let i = 0; i < W.darts.length; i++) { const d = W.darts[i]; const k = 'd' + i; seen[k] = 1; const g = ensure(k, () => blocky([[0.12, 0.12, 0.5, 0xf2e27a, 0, 0, 0]])); g.position.set(d.x, W.M.h(d.x, d.z) + 1.2, d.z); }
   // players
-  if (me) { seen.me = 1; const g = ensure('me', W.mode === 'poacher' ? poacherMesh : (() => ranger(0x2f8a4a))); g.visible = me.onFoot; g.position.set(me.x, W.M.h(me.x, me.z), me.z); g.rotation.y = me.ang; g.scale.y = me.crouch ? 0.65 : 1; }
+  if (me) { seen.me = 1; const kind = W.mode === 'poacher' ? 'poacher' : 'ranger'; if (actors.me && actors.me.userData.kind !== kind) { scene.remove(actors.me); delete actors.me; } const g = ensure('me', () => { const m = kind === 'poacher' ? poacherMesh() : ranger(0x2f8a4a); m.userData.kind = kind; return m; }); g.visible = me.onFoot; g.position.set(me.x, W.M.h(me.x, me.z), me.z); g.rotation.y = me.ang; g.scale.y = me.crouch ? 0.65 : 1; }
   let oi = 0;
   for (const id in others) { const o = others[id]; if (!o || !o.s) continue; seen['o' + oi] = 1; const g = ensure('o' + oi, () => ranger(parseInt(o.color.slice(1), 16) || 0x3aa0d8)); g.visible = true; g.position.set(o.s.x, W.M.h(o.s.x, o.s.z), o.s.z); g.rotation.y = o.s.a; oi++; }
   // crew riders shown when seats hold crew ids

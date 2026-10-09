@@ -34,6 +34,40 @@ Sim.init({ assist: () => GS.role !== 'client' && !!save.assist, upg: () => (GS.r
 function Wplayers() { return Sim.W().players; }
 
 /* ---------- flow ---------- */
+const isPoach = () => (Sim.W().mode || GS.mode) === 'poacher';
+G.isPoach = isPoach;
+// wipe everything a session can leave behind, so the next mode starts clean
+G.resetSession = function () {
+  GS.caseId = null; GS.jobId = null; GS.run = null; GS.carry = []; GS.night = false; GS.busts = 0; GS.rams = 0; GS.jobBusts = 0;
+  GS.travelLock = 0; GS.stuck = 0; GS.unstick = 0; GS.regen = 0; GS.prevPlayers = {}; GS.paused = false;
+  IN.jx = 0; IN.jz = 0; IN.th = 0; IN.st = 0; IN.hb = false;
+  for (const k in lastPos) delete lastPos[k];
+  if (GS._reconCam) { V.setCam({ dist: 11, pitch: 0.42 }); GS._reconCam = 0; }
+  const W = Sim.W(); W.drone = null; W.marks = [];
+  hintT = 0; const h = $('hint'); if (h) h.classList.add('hidden');
+  const tb = $('toasts'); if (tb) tb.innerHTML = '';
+  const lm = $('lockMark'); if (lm) lm.classList.add('hidden');
+  Snd.mood('calm');
+};
+// start a mode from scratch: own save, own map, own HUD
+G.startMode = function (mode) {
+  G.resetSession();
+  GS.mode = mode === 'poacher' ? 'poacher' : 'ranger';
+  GS.ui = 'game'; G.UI.closeAll(); G.UI.show();
+  if (GS.mode === 'poacher') goMap('savanna', { mode: 'poacher', fresh: 1, heat: 0 });
+  else goMap('camp', { mode: 'ranger', fresh: 1 });
+  G.loop();
+};
+// switch modes mid-game (pause menu). The host's friends come along.
+G.switchMode = function (mode) {
+  if (GS.role === 'client') { G.toast('The host picks the mode.'); return; }
+  if (mode === 'poacher') G.startPoacher(); else G.play();
+};
+G.quitToTitle = function () {
+  if (G.N) G.N.leave(true);
+  G.resetSession(); Sim.resetPlayers();
+  GS.mode = 'ranger'; GS.ui = 'title'; G.UI.closeAll(); G.UI.show();
+};
 function goMap(map, o) {
   if (!(o && o.keepHint)) { hintT = 0; const h = document.getElementById("hint"); if (h) h.classList.add("hidden"); }
   o = o || {};
@@ -45,8 +79,14 @@ function goMap(map, o) {
   const W = Sim.load(map, { caseId: o.caseId || null, night: !!o.night, seed: o.seed, goals: o.goals, carry: GS.carry, residents: save.residents, mode: mode, jobId: o.jobId || (mode === 'poacher' ? GS.jobId : null), heat: o.heat });
   Sim.spawnTruck(); Sim.carry(GS.carry);
   const prev = GS.prevPlayers || {};
-  const ids = Object.keys(prev).length ? Object.keys(prev) : [GS.pid];
-  if (ids.indexOf(GS.pid) < 0) ids.unshift(GS.pid);
+  // only real people: me plus the friends in the room right now (stale ids from an old room or mode never come back)
+  const ids = [GS.pid];
+  if (GS.role === 'host' && G.N && G.N.room) {
+    const live = {}; try { G.N.room.players().forEach((q) => { live[q.pid] = 1; }); } catch (er) { /* ignore */ }
+    for (const k in GS.others) live[k] = 1;
+    for (const k in live) if (ids.indexOf(k) < 0) ids.push(k);
+  }
+  Sim.resetPlayers();
   ids.forEach((id) => {
     const p = Sim.addPlayer(id), q = prev[id];
     if (q) { p.darts = q.darts; p.flares = q.flares; if (q.nets != null) p.nets = q.nets; if (q.seat >= 0 && W.truck && !o.busted) { W.truck.seats[q.seat] = id; p.onFoot = false; p.seat = q.seat; } }
@@ -66,9 +106,10 @@ function enterLocal(W) {
   Snd.music('calm'); Snd.setRoot(W.night ? 146 : W.map === 'camp' ? 196 : 174);
   G.UI.hud();
   const b = GB.BIOMES[W.M.biome];
-  G.toast(b.name + (W.night ? '  \u00b7  NIGHT' : ''));
+  G.toast(G.placeName(W) + (W.night ? '  \u00b7  NIGHT' : ''));
 }
 G.enterLocal = enterLocal;
+G.placeName = function (W, short) { if (!W || !W.M) return ''; if (W.mode === 'poacher' && W.map === 'camp') return short ? 'Sanctuary raid' : 'Ranger Sanctuary (raid)'; if (W.mode === 'poacher' && W.dealer && !short) return GB.BIOMES[W.M.biome].name + ' \u00b7 Hideout'; return GB.BIOMES[W.M.biome].name; };
 
 G.startCase = function (id) {
   const cs = GB.caseById(id); if (!cs) return;
@@ -79,10 +120,7 @@ G.startCase = function (id) {
   if (GS.tut) setTimeout(() => G.hint('Walk with the stick. The giraffe is marked on your tracker. Get close and tap DART.', 8), 1600);
 };
 G.startPoacher = function () {
-  GS.mode = 'poacher'; GS.jobId = null; GS.caseId = null; GS.carry = []; GS.night = false; GS.ui = 'game';
-  G.UI.closeAll(); G.UI.show();
-  goMap('savanna', { mode: 'poacher', fresh: 1, heat: 0 });
-  G.loop();
+  G.startMode('poacher');
   G.hint('You\'re the cartoon poacher. NET animals into crates, sell them alive at the hideout van, and don\'t let the rangers catch you. Heat drops when you hide.', 9);
 };
 G.startJob = function (id) {
@@ -96,10 +134,8 @@ G.startJob = function (id) {
   G.hint(j.brief, 9);
 };
 G.play = function () {
-  GS.mode = 'ranger';
-  GS.ui = 'game'; G.UI.show();
-  if (!Sim.W().M) G.freeRoam('camp');
-  G.loop();
+  // always a fresh ranger camp: never resume whatever world (or mode) was loaded before
+  G.startMode('ranger');
   if (!save.tut) setTimeout(() => G.hint('Welcome to base camp, Ranger! Follow the yellow arrow to the CASE BOARD and tap CASES.', 9), 1200);
 };
 G.acceptCase = function (id) {
@@ -107,7 +143,7 @@ G.acceptCase = function (id) {
   if (!id) { GS.night = false; GS.caseId = null; const W = Sim.W(); W.caseId = null; W.goals = []; G.toast('Free roam: drive through any gate to explore.'); G.UI.hud(); return; }
   const cs = GB.caseById(id);
   GS.caseId = id; GS.night = !!cs.night; GS.tut = cs.tut && !save.tut ? 1 : 0;
-  const W = Sim.W(); W.caseId = id; W.goals = cs.goals.map((g) => ({ kind: g.kind, species: g.species || '', n: g.n, have: 0 }));
+  const W = Sim.W(); W.done = false; W.caseId = id; W.goals = cs.goals.map((g) => ({ kind: g.kind, species: g.species || '', n: g.n, have: 0 }));
   GS.caseStart = Date.now(); GS.busts = 0; GS.rams = 0;
   G.toast('Case accepted: ' + cs.name); G.hint(cs.brief + '  Follow the arrow to the ' + GB.BIOMES[cs.biome].name + ' gate.', 9);
   if (GS.tut) setTimeout(() => G.hint('Tip: walk up to the green truck and tap BOARD. Drive with GAS + the stick, then drive through the gate.', 9), 9500);
@@ -157,11 +193,11 @@ function deliverReward(sp, stars) {
 }
 G.onEvents = function (list) {
   for (const e of list) {
-    if (e.t === 'sleep') { Snd.fx('sleep'); G.toast(e.name + ' is calm. Load it on the truck!'); if (GS.tut === 1) { GS.tut = 2; G.hint('Stand next to the sleeping animal with the truck close by and tap LOAD.', 8); } }
+    if (e.t === 'sleep') { Snd.fx('sleep'); G.toast(e.name + (isPoach() ? ' is calm. NET it!' : ' is calm. Load it on the truck!')); if (GS.tut === 1) { GS.tut = 2; G.hint('Stand next to the sleeping animal with the truck close by and tap LOAD.', 8); } }
     else if (e.t === 'load') { Snd.fx('load'); G.toast(e.name + ' loaded \uD83D\uDE9A'); if (GS.tut === 2) { GS.tut = 3; G.hint('Board the truck and follow the arrow to the CAMP gate, then drive into the Sunlands sanctuary and tap UNLOAD.', 9); } }
     else if (e.t === 'deliver') { const pts = deliverReward(e.sp, 0); Snd.fx('deliver'); G.toast(e.name + ' is safe at ' + e.sanct + (pts ? '  +' + pts + ' pts' : '') + ' \uD83C\uDF3F'); }
     else if (e.t === 'casewon') { finishCase(e.stars); }
-    else if (e.t === 'spotted') { Snd.fx('spotted'); G.toast('Poachers spotted you! \uD83D\uDEA8', true); Snd.mood('chase'); }
+    else if (e.t === 'spotted') { Snd.fx('spotted'); G.toast(isPoach() ? (e.jeep ? 'A ranger jeep is after you! Hide or drive off. \uD83D\uDEA8' : 'Rangers spotted you! Hide or drive off. \uD83D\uDEA8') : (e.jeep ? 'A poacher jeep spotted you! \uD83D\uDEA8' : 'Poachers spotted you! \uD83D\uDEA8'), true); Snd.mood('chase'); }
     else if (e.t === 'busted') {
       if (e.poach || Sim.W().mode === 'poacher') {
         Snd.fx('busted'); if (GS.role !== 'client') { psave.stats.busted++; G.persistP(); }
@@ -170,29 +206,33 @@ G.onEvents = function (list) {
         if (!Sim.W().dealer && GS.role !== 'client') setTimeout(() => G.travel('savanna'), 80);
       } else { Snd.fx('busted'); if (GS.role !== 'client') { save.stats.busted++; G.persist(); } GS.busts = (GS.busts || 0) + 1; G.toast('Busted! The poachers took the truck\'s cargo. Back to base camp — rescued animals are safe.', true); Snd.mood('calm'); GS.carry = []; if (GS.role !== 'client') setTimeout(() => G.bustedToCamp(), 50); }
     }
+    else if (isPoach() && (e.t === 'bagged' || e.t === 'caged' || e.t === 'freed' || e.t === 'recon' || e.t === 'deliver' || e.t === 'load' || String(e.t).indexOf('drone') === 0)) { /* ranger-only events */ }
     else if (e.t === 'bagged') { Snd.fx('spotted'); G.toast('Poachers grabbed the ' + e.name + '! Chase their jeep and bump it to free it.', true); }
     else if (e.t === 'caged') G.toast('They caged the ' + e.name + ' at their camp. Drive in to open the cage.', true);
     else if (e.t === 'freed') { Snd.fx('freed'); G.toast(e.name + ' is free! It is calm and ready to load.'); }
     else if (e.t === 'bolt') { Snd.fx('bolt'); G.toast(e.name + ' is running! Chase it in the truck and cut it off.'); }
-    else if (e.t === 'herd') G.toast(e.name + ' is tired of running. Dart it now!');
-    else if (e.t === 'windup') { Snd.fx('windup'); G.toast(e.name + ' is about to charge! Back up or tap CREW.', true); }
+    else if (e.t === 'herd') G.toast(e.name + ' is tired of running. ' + (isPoach() ? 'NET it now!' : 'Dart it now!'));
+    else if (e.t === 'windup') { Snd.fx('windup'); G.toast(e.name + ' is about to charge! Back up' + (isPoach() ? '!' : ' or tap CREW.'), true); }
     else if (e.t === 'knock') { Snd.fx('knock'); if (e.pid === GS.pid) { G.toast(e.name + ' knocked you down! You are fine.', true); const me = Sim.W().players[GS.pid]; if (GS.role === 'client' && me && me.onFoot) { me.knock = 1.2; me.x += Math.sin(e.a || 0) * 2; me.z += Math.cos(e.a || 0) * 2; } } }
-    else if (e.t === 'jeepstall') G.toast('The poacher jeep stalls!');
+    else if (e.t === 'jeepstall') G.toast(isPoach() ? 'The ranger jeep stalls on your decoy!' : 'The poacher jeep stalls!');
     else if (e.t === 'rammed') { GS.rams = (GS.rams || 0) + 1; Snd.fx('knock'); G.toast('Too rough! ' + e.name + ' bolted. Herd it, don\u2019t ram it.', true); }
     else if (e.t === 'flare') Snd.fx('flare');
     else if (e.t === 'dart') Snd.fx('dart');
     else if (e.t === 'hit') Snd.fx('hit');
-    else if (e.t === 'siren') { Snd.fx('siren'); G.toast('The crew cuts the poachers off!'); }
-    else if (e.t === 'scared') G.toast('Poachers scatter from the flare!');
+    else if (e.t === 'siren') { Snd.fx('siren'); G.toast(isPoach() ? 'Your lookout sends the rangers the wrong way!' : 'The crew cuts the poachers off!'); }
+    else if (e.t === 'scared') G.toast(isPoach() ? 'Rangers run off to check your decoy!' : 'Poachers scatter from the flare!');
     else if (e.t === 'horn') Snd.fx('horn');
-    else if (e.t === 'distract') G.toast('Crew is distracting the ' + e.name + '.');
-    else if (e.t === 'nodart') G.toast('Out of darts! Restock at camp.', true);
-    else if (e.t === 'noflare') G.toast('No flares left.', true);
-    else if (e.t === 'noload') G.toast('Nothing calm to load. Dart it first.');
+    else if (e.t === 'distract') G.toast((isPoach() ? 'Your lookout is distracting the ' : 'Crew is distracting the ') + e.name + '.');
+    else if (e.t === 'nodart') G.toast(isPoach() ? 'Out of nets! Restock at the hideout van.' : 'Out of darts! Restock at camp.', true);
+    else if (e.t === 'noflare') G.toast(isPoach() ? 'No decoys left.' : 'No flares left.', true);
+    else if (e.t === 'noload') G.toast(isPoach() ? 'Nothing close enough to net.' : 'Nothing calm to load. Dart it first.');
     else if (e.t === 'needtruck') { G.toast(Sim.W().mode === 'poacher' ? 'Bring the truck closer to crate it.' : 'Bring the truck closer.'); if (Sim.W().mode === 'poacher' && GS.me && GS.me.nets != null) GS.me.nets = Math.min(Sim.netMax(), GS.me.nets + 1); }
     else if (e.t === 'cargofull') { G.toast(Sim.W().mode === 'poacher' ? 'No empty crates. Sell at the van first.' : 'The truck is full. Deliver first.'); if (Sim.W().mode === 'poacher' && GS.me && GS.me.nets != null) GS.me.nets = Math.min(Sim.netMax(), GS.me.nets + 1); }
     else if (e.t === 'nocargo') G.toast('The truck is empty.');
-    else if (e.t === 'nosanct') G.toast('Drive inside a sanctuary fence to unload.');
+    else if (e.t === 'nosanct') G.toast(isPoach() ? 'Sell crates at the hideout van.' : 'Drive inside a sanctuary fence to unload.');
+    else if (e.t === 'nodealer') G.toast('Drive the truck up to the hideout van to sell.');
+    else if (e.t === 'nolock') G.toast('Sneak up to a pen gate to pick the lock.');
+    else if (e.t === 'openpen') G.toast(e.name + ' pen is already open. NET an animal inside.');
     else if (e.t === 'recharge') { Snd.fx('restock'); G.toast(Sim.W().mode === 'poacher' ? 'Nets restocked at the van.' : 'Darts and flares restocked.'); }
     else if (e.t === 'board') Snd.fx('ui');
     else if (e.t === 'dronelaunch') { Snd.fx('dart'); G.toast(e.mode === 'follow' ? ('Drone locked on the ' + e.name + '. Freeze ray slowing it.') : 'Drone up. Fly with the stick. Battery is limited.'); }
@@ -453,5 +493,12 @@ G.boot = function () {
   // preload worlds
   setTimeout(() => { GB.World.MAPS.forEach((id) => GB.World.get(id)); }, 400);
 };
-G.applySnap = function (s) { Sim.unpack(s); if (s && s.mode) GS.mode = s.mode; const W = Sim.W(); if (!V.map || V.map.id !== W.map) { V.buildTerrain(W.M); V.clearActors(); } };
+G.applySnap = function (s) {
+  const before = Sim.W().mode;
+  Sim.unpack(s); if (s && s.mode) GS.mode = s.mode;
+  const W = Sim.W();
+  if (!V.map || V.map.id !== W.map) { V.buildTerrain(W.M); V.clearActors(); }
+  else if (before !== W.mode) V.clearActors();
+  if (before !== W.mode && G.UI) G.UI.hud();
+};
 })();

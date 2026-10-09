@@ -140,6 +140,7 @@ Sim.addPlayer = function (pid) {
   const p = { id: pid, x: s.x + n * 1.3, z: s.z, ang: s.ang, onFoot: true, seat: -1, crouch: false, inv: W.mode === 'poacher' ? 3 : 0, darts: dartMax(upg()), flares, nets: netMax(), cargoLost: 0 };
   p.y = W.M.h(p.x, p.z); W.players[pid] = p; return p;
 };
+Sim.resetPlayers = function () { for (const k in W.players) delete W.players[k]; for (const k in inputs) delete inputs[k]; if (W.truck) W.truck.seats = [null, null, null]; };
 Sim.removePlayer = function (pid) { const p = W.players[pid]; if (!p) return; if (!p.onFoot) exitTruck(p); delete W.players[pid]; };
 Sim.recharge = function (pid) {
   const p = W.players[pid]; if (!p) return;

@@ -38,7 +38,7 @@ UI.hud = function () {
   const cargo = W.truck ? W.truck.cargo.length : 0, cap = 2 + (pu.cargo || 0);
   $('nCargo').textContent = cargo + '/' + cap;
   const hp = $('nHeat'); if (hp) { const hv = Math.round(W.heat || 0); hp.textContent = hv; $('heatP').classList.toggle('hot', hv >= 70); $('heatP').classList.toggle('warm', hv >= 35 && hv < 70); }
-  $('biomeName').textContent = W.M ? (GB.BIOMES[W.M.biome].name + (W.night && W.map !== 'camp' ? ' \u00b7 NIGHT' : '')) : '';
+  $('biomeName').textContent = W.M ? (G.placeName(W, 1) + (W.night && W.map !== 'camp' ? ' \u00b7 NIGHT' : '')) : '';
   const cs = GB.caseById(W.caseId || GS.caseId);
   const job = poach ? GB.jobById(W.jobId) : null;
   $('obj').innerHTML = (poach ? job : cs) ? '<b>' + (poach ? job.name : cs.name) + '</b><br>' + (W.goals || []).map(goalLine).join('<br>') : (poach ? 'Poacher free roam \u00b7 NET crates, SELL them at the van' : 'Free roam \u00b7 pick a case at the Case Board');
@@ -149,7 +149,7 @@ function relabel() {
     else if (Sim.penGateAt(p.x, p.z) && !(W.pens && W.pens[Sim.penGateAt(p.x, p.z).id])) t = 'UNLOCK';
     else if (GS.me.onFoot && W.truck && Math.hypot(GS.me.x - W.truck.x, GS.me.z - W.truck.z) < 4.6) t = 'BOARD';
     else if (!GS.me.onFoot) t = 'EXIT';
-    else t = 'NET';
+    else t = 'USE';
     if (b.dataset.t !== t) { b.dataset.t = t; b.querySelector('b').textContent = t; }
     const recon = W.drone && W.drone.mode === 'recon' && W.drone.owner === GS.pid;
     $('seatInfo').textContent = recon ? 'DRONE RECON' : (document.body.dataset.mode === 'm-drive' ? 'DRIVING' : document.body.dataset.mode === 'm-gun' ? 'IN THE BACK' : (GS.me.crouch ? 'SNEAKING' : 'ON FOOT'));
@@ -201,9 +201,10 @@ UI.shop = function () {
 };
 UI.caseDone = function (id, n, bonus) { const cs = GB.caseById(id); $('doneBody').innerHTML = '<h2>\uD83C\uDFC5 CASE CLOSED</h2><p class="sub">' + (cs ? cs.name : '') + '</p><div class="bigstars">' + stars(n) + '</div><p class="sub">+' + bonus + ' bonus rescue points. Your animals are living in the sanctuaries at base camp \u2014 go say hi!</p>'; $('scrDone').classList.remove('hidden'); };
 UI.mapScreen = function () {
-  const W = Sim.W(), s = G.save();
-  $('mapInfo').textContent = (W.M ? GB.BIOMES[W.M.biome].name + ' \u00b7 ' : '') + 'Animals rescued: ' + s.stats.rescued;
-  $('guideList').innerHTML = Object.values(GB.SPECIES).map((d) => '<div class="gitem ' + d.temp + '"><b>' + d.emoji + ' ' + d.name + '</b>' + GB.BIOMES[d.biome].name + '<br>' + ({ chill: 'Chill: walk up and dart', feisty: 'Feisty: sneak or use crew', runner: 'Runner: drone freeze ray, or chase' })[d.temp] + '<br>Rescued: ' + (s.rescued[d.id] || 0) + '</div>').join('');
+  const W = Sim.W(), s = G.save(), poach = G.isPoach(), ps = G.psave();
+  $('mapInfo').textContent = (W.M ? G.placeName(W) + ' \u00b7 ' : '') + (poach ? 'Crates sold: ' + ps.stats.sold + ' \u00b7 Busted: ' + ps.stats.busted : 'Animals rescued: ' + s.stats.rescued);
+  const tips = poach ? { chill: 'Chill: walk up and NET it', feisty: 'Feisty: sneak up, then NET it', runner: 'Runner: tire it out with the truck, then NET it' } : { chill: 'Chill: walk up and dart', feisty: 'Feisty: sneak or use crew', runner: 'Runner: drone freeze ray, or chase' };
+  $('guideList').innerHTML = Object.values(GB.SPECIES).map((d) => '<div class="gitem ' + d.temp + '"><b>' + d.emoji + ' ' + d.name + '</b>' + GB.BIOMES[d.biome].name + '<br>' + tips[d.temp] + (poach ? '' : '<br>Rescued: ' + (s.rescued[d.id] || 0)) + '</div>').join('');
   $('scrMap').classList.remove('hidden');
 };
 
@@ -247,16 +248,17 @@ UI.bind = function () {
   hold($('bHb'), () => { G.IN.hb = true; }, () => { G.IN.hb = false; });
   tap($('bSeat'), () => G.press('seat'));
   tap($('bDart'), () => { if (GS.me && GS.me.darts <= 0) { G.toast('Out of darts! Restock at the camp Dart Supply.', true); Snd.fx('click'); return; } if (GS.me) GS.me.darts--; G.press('dart'); UI.hud(); });
-  tap($('bFlare'), () => { if (GS.me && GS.me.flares <= 0) { G.toast('No flares left. Restock at camp.', true); return; } if (GS.me) GS.me.flares--; G.press('flare'); UI.hud(); });
+  tap($('bFlare'), () => { if (GS.me && GS.me.flares <= 0) { G.toast(G.isPoach() ? 'No decoys left. Restock at the hideout van.' : 'No flares left. Restock at camp.', true); return; } if (GS.me) GS.me.flares--; G.press('flare'); UI.hud(); });
   tap($('bUse'), () => G.press('use'));
   tap($('bCrouch'), () => G.press('crouch'));
   tap($('bCrew'), () => G.press('distract'));
   tap($('bHorn'), () => G.press('horn'));
   tap($('bDrone'), () => G.press('drone'));
   tap($('bNet'), () => { if (GS.me && GS.me.nets <= 0) { G.toast('Out of nets. Restock at the hideout van.', true); return; } if (GS.me) GS.me.nets--; G.press('net'); UI.hud(); });
-  tap($('bPause'), () => { GS.paused = true; $('assistT2').checked = !!G.save().assist; $('cycleT').checked = !!G.save().cycle; $('bPBoard').textContent = GS.mode === 'poacher' ? '\uD83D\uDCCB JOBS' : '\uD83D\uDCCB CASES'; $('bPShop').textContent = GS.mode === 'poacher' ? '\uD83D\uDCB0 GEAR' : '\u2B50 UPGRADES'; $('bPCamp').textContent = GS.mode === 'poacher' ? '\uD83D\uDCE1 BACK TO HIDEOUT' : '\uD83C\uDFD5\uFE0F RADIO BACK TO CAMP'; $('scrPause').classList.remove('hidden'); });
+  tap($('bPause'), () => { GS.paused = true; $('assistT2').checked = !!G.save().assist; $('cycleT').checked = !!G.save().cycle; $('bPBoard').textContent = GS.mode === 'poacher' ? '\uD83D\uDCCB JOBS' : '\uD83D\uDCCB CASES'; $('bPShop').textContent = GS.mode === 'poacher' ? '\uD83D\uDCB0 GEAR' : '\u2B50 UPGRADES'; $('bPCamp').textContent = GS.mode === 'poacher' ? '\uD83D\uDCE1 BACK TO HIDEOUT' : '\uD83C\uDFD5\uFE0F RADIO BACK TO CAMP'; $('bPSwitch').textContent = G.isPoach() ? '\uD83C\uDF3F SWITCH TO RANGER MODE' : '\uD83D\uDCE6 SWITCH TO POACHER MODE'; $('bPSwitch').classList.toggle('hidden', GS.role === 'client'); $('scrPause').classList.remove('hidden'); });
   tap($('bResume'), () => { GS.paused = false; $('scrPause').classList.add('hidden'); });
-  tap($('bPQuit'), () => { G.N.leave(true); GS.mode = 'ranger'; GS.ui = 'title'; UI.closeAll(); UI.show(); });
+  tap($('bPQuit'), () => { G.quitToTitle(); });
+  tap($('bPSwitch'), () => { if (GS.role === 'client') { G.toast('The host picks the mode.'); return; } G.switchMode(G.isPoach() ? 'ranger' : 'poacher'); });
   tap($('bMute'), () => { G.save().muted = !G.save().muted; G.persist(); Snd.setMuted(G.save().muted); $('bMute').textContent = G.save().muted ? '\uD83D\uDD07' : '\uD83D\uDD0A'; });
   $('bMute').textContent = G.save().muted ? '\uD83D\uDD07' : '\uD83D\uDD0A';
   tap($('bMap'), () => UI.mapScreen());
